@@ -121,7 +121,7 @@ documents:
 
 ---
 
-## 🏢 Empresas e portais
+## Empresas e portais
 
 Empresa grande quase nunca tem "API de candidatura". O que existe é o portal de
 recrutamento que ela usa. Este projeto fala com os principais:
@@ -190,7 +190,7 @@ limits:
 
 ---
 
-## 🔐 Login nos portais
+## Login nos portais
 
 A automação usa um **perfil de navegador persistente** (`browser-profile/`): você
 loga uma vez por portal e as próximas execuções já entram autenticadas.
@@ -225,7 +225,7 @@ candidate answers "Pretensão salarial?" # testa uma pergunta de triagem
 
 ---
 
-## 🗂 Como funciona
+## Como funciona
 
 ```
 descobrir            filtrar/ranquear         candidatar              registrar
