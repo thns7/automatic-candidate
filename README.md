@@ -29,7 +29,7 @@ candidate apply --limit 3
 
 ---
 
-## 📍 ONDE COLOCAR AS SUAS INFORMAÇÕES
+## ONDE COLOCAR AS SUAS INFORMAÇÕES
 
 `candidate init` cria quatro arquivos a partir dos modelos `.example`.
 **Todos os quatro estão no `.gitignore`** — pode preencher à vontade que nada
@@ -161,7 +161,7 @@ Exemplo de entrada em `config/companies.yaml`:
 
 ---
 
-## 🚦 Modos de envio
+## Modos de envio
 
 Definido em `config/settings.yaml` (`submit_mode`):
 
@@ -205,7 +205,7 @@ para continuar.
 
 ---
 
-## 🧰 Comandos
+## Comandos
 
 ```bash
 candidate init                          # cria os arquivos de configuração
@@ -252,7 +252,7 @@ sources/*     ──►    matching.py        ──►   appliers/*        ─�
 
 ---
 
-## ✅ Testes
+## Testes
 
 ```bash
 pip install -e ".[dev,browser]"
@@ -268,7 +268,7 @@ instalado, eles são pulados e o resto da suíte roda normalmente.
 
 ---
 
-## ⚠️ Antes de usar
+## Antes de usar
 
 - **Uso pessoal.** Isto automatiza *as suas* candidaturas. Não é um serviço para
   candidatar outras pessoas nem para disparar currículo em massa.
