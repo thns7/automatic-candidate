@@ -10,7 +10,7 @@ ficam no seu computador e **não** vão para o Git.
 
 ---
 
-## ⚡ Início rápido
+## Início rápido
 
 ```bash
 git clone https://github.com/thns7/automatic-candidate.git
