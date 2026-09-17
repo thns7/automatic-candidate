@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Vaga: Engenheiro de Software — Empresa Teste</title></head>
+<body>
+<h1>Candidate-se: Engenheiro de Software Backend</h1>
+<form id="application">
+  <div class="field">
+    <label for="nome">Nome completo *</label>
+    <input id="nome" name="full_name" type="text" required>
+  </div>
+  <div class="field">
+    <label for="mail">E-mail *</label>
+    <input id="mail" name="email" type="email" required>
+  </div>
+  <div class="field">
+    <label for="tel">Telefone celular</label>
+    <input id="tel" name="phone" type="tel">
+  </div>
+  <div class="field">
+    <label for="cidade">Cidade</label>
+    <input id="cidade" name="city" type="text">
+  </div>
+  <div class="field">
+    <input id="li" name="linkedin" type="url" placeholder="Perfil do LinkedIn">
+  </div>
+  <div class="field">
+    <span class="label">Qual sua pretensão salarial?</span>
+    <input id="sal" name="salary" type="text" aria-label="Qual sua pretensão salarial?">
+  </div>
+  <div class="field">
+    <label for="ingles">Nível de inglês</label>
+    <select id="ingles" name="english">
+      <option value="">Selecione</option>
+      <option>Básico</option>
+      <option>Intermediário</option>
+      <option>Avançado</option>
+      <option>Fluente</option>
+    </select>
+  </div>
+  <fieldset class="field">
+    <legend>Você aceita mudança de cidade?</legend>
+    <label><input type="radio" name="relocate" value="sim"> Sim</label>
+    <label><input type="radio" name="relocate" value="nao"> Não</label>
+  </fieldset>
+  <div class="field">
+    <label for="aviso">Aviso prévio</label>
+    <input id="aviso" name="notice" type="text">
+  </div>
+  <div class="field">
+    <label for="motivo">Por que você quer trabalhar conosco?</label>
+    <textarea id="motivo" name="motivation" rows="4"></textarea>
+  </div>
+  <div class="field">
+    <label for="cv">Anexe seu currículo (PDF)</label>
+    <input id="cv" name="resume" type="file" accept=".pdf">
+  </div>
+  <div class="field">
+    <label for="carta">Carta de apresentação (opcional)</label>
+    <input id="carta" name="cover_letter" type="file">
+  </div>
+  <div class="field">
+    <label><input id="termos" type="checkbox" name="terms"> Li e aceito os termos de uso e a política de privacidade</label>
+  </div>
+  <div class="field">
+    <label><input id="news" type="checkbox" name="marketing"> Quero receber novidades e promoções por e-mail</label>
+  </div>
+  <div class="field">
+    <label for="misterio">Qual o código interno do seu indicador?</label>
+    <input id="misterio" name="referral_code" type="text">
+  </div>
+  <input type="hidden" name="csrf" value="abc">
+  <button type="button" id="enviar">Enviar candidatura</button>
+</form>
+<script>
+  document.getElementById('enviar').addEventListener('click', () => {
+    document.body.innerHTML = '<h1>Candidatura enviada com sucesso!</h1><p>Obrigado por se candidatar.</p>';
+  });
+</script>
+</body>
+</html>

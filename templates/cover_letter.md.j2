@@ -1,0 +1,32 @@
+{# ---------------------------------------------------------------------------
+   Template da carta de apresentacao (Jinja2).
+   Variaveis disponiveis: profile, job, company, today
+   Edite livremente - o texto e seu.
+   --------------------------------------------------------------------------- #}
+{{ profile.personal.full_name }}
+{{ profile.personal.email }} | {{ profile.personal.phone }}
+{{ profile.links.linkedin }}{% if profile.links.github %} | {{ profile.links.github }}{% endif %}
+
+{{ today }}
+
+Prezado time de recrutamento da {{ company }},
+
+Escrevo para me candidatar a vaga de {{ job.title }}{% if job.location %} ({{ job.location }}){% endif %}.
+Sou {{ profile.professional.current_title }} com {{ profile.professional.years_of_experience }} anos de
+experiencia em desenvolvimento de software, atuando principalmente com
+{{ profile.professional.skills[:4] | join(", ") }}.
+
+{% if profile.experience %}
+Na {{ profile.experience[0].company }}, como {{ profile.experience[0].title }},
+{{ profile.experience[0].summary | trim }}
+{% endif %}
+
+O que me atrai na {{ company }} e a escala dos problemas de engenharia e a
+maturidade tecnica do time. Acredito que minha experiencia com
+{{ profile.professional.skills | join(", ") }} pode contribuir diretamente com os
+desafios descritos na vaga.
+
+Fico a disposicao para uma conversa.
+
+Atenciosamente,
+{{ profile.personal.full_name }}

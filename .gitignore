@@ -1,0 +1,33 @@
+# ---- SUAS INFORMAÇÕES PESSOAIS (nunca versionar) ----
+config/profile.yaml
+config/settings.yaml
+config/companies.yaml
+.env
+data/resumes/*
+!data/resumes/.gitkeep
+data/screenshots/*
+!data/screenshots/.gitkeep
+data/*.sqlite3
+data/*.db
+data/reports/
+browser-profile/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---- Editores / SO ----
+.vscode/
+.idea/
+.DS_Store

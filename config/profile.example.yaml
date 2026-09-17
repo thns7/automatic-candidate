@@ -1,0 +1,154 @@
+# =============================================================================
+#  >>>  AQUI VAO AS SUAS INFORMACOES PESSOAIS  <<<
+# =============================================================================
+#  Copie este arquivo para  config/profile.yaml  e edite:
+#
+#      cp config/profile.example.yaml config/profile.yaml
+#
+#  config/profile.yaml esta no .gitignore -> NUNCA vai para o GitHub.
+#  Qualquer valor pode usar variavel de ambiente: "${MINHA_VAR}" (lida do .env)
+# =============================================================================
+
+personal:
+  first_name: "Thiago"
+  last_name: "Nascimento"
+  full_name: "Thiago Nascimento"
+  email: "seu.email@exemplo.com"
+  phone: "+55 11 99999-9999"          # formato internacional evita rejeicao de mascara
+  phone_country_code: "+55"
+  birth_date: "1999-01-31"            # usado por portais BR (Gupy); deixe "" se nao quiser
+  cpf: "${CPF}"                       # NUNCA escreva o CPF aqui; use o .env
+  gender: "Prefiro nao informar"
+  pronouns: "ele/dele"
+
+location:
+  city: "Sao Paulo"
+  state: "SP"
+  state_code: "SP"
+  country: "Brasil"
+  country_code: "BR"
+  postal_code: "01310-000"
+  address_line1: "Rua Exemplo, 123"
+  address_line2: ""
+  timezone: "America/Sao_Paulo"
+  willing_to_relocate: true
+  remote_preference: "hybrid"         # remote | hybrid | onsite | any
+
+links:
+  linkedin: "https://www.linkedin.com/in/seu-perfil"
+  github: "https://github.com/thns7"
+  portfolio: "https://seusite.dev"
+  website: ""
+  other: ""
+
+professional:
+  headline: "Software Engineer | Python, Cloud, Dados"
+  years_of_experience: 4
+  current_company: "Empresa Atual"
+  current_title: "Software Engineer"
+  seniority: "mid"                    # intern | junior | mid | senior | staff
+  skills:
+    - Python
+    - SQL
+    - Docker
+    - Kubernetes
+    - AWS
+    - FastAPI
+    - PostgreSQL
+    - Git
+  languages:
+    - { name: "Portugues", level: "Nativo" }
+    - { name: "Ingles", level: "Avancado" }
+    - { name: "Espanhol", level: "Basico" }
+
+education:
+  - degree: "Bacharelado em Ciencia da Computacao"
+    school: "Universidade Exemplo"
+    field: "Ciencia da Computacao"
+    start_year: 2019
+    end_year: 2023
+    status: "completo"                # completo | cursando | trancado
+
+experience:
+  - title: "Software Engineer"
+    company: "Empresa Atual"
+    start: "2023-02"
+    end: ""                           # vazio = emprego atual
+    location: "Sao Paulo, BR"
+    summary: >
+      Desenvolvimento de APIs em Python/FastAPI, pipelines de dados e
+      automacoes de infraestrutura em AWS.
+  - title: "Desenvolvedor Junior"
+    company: "Empresa Anterior"
+    start: "2021-06"
+    end: "2023-01"
+    location: "Remoto"
+    summary: "Manutencao de servicos Django e integracoes REST."
+
+compensation:
+  currency: "BRL"
+  desired_salary_monthly: 15000        # use o que o portal pedir (mensal BR)
+  desired_salary_annual: 180000        # anual (US/EU)
+  salary_answer_text: "Aberto a negociacao conforme escopo e pacote total."
+
+# ---------------------------------------------------------------------------
+#  Documentos: coloque os PDFs em data/resumes/ e referencie abaixo.
+#  "default" e obrigatorio. Crie variantes por area e aponte em companies.yaml.
+# ---------------------------------------------------------------------------
+documents:
+  resumes:
+    default: "data/resumes/curriculo.pdf"
+    # en: "data/resumes/resume-en.pdf"
+    # ai: "data/resumes/curriculo-ml.pdf"
+  cover_letter_template: "templates/cover_letter.md.j2"
+  extra_attachments: []               # ex: ["data/resumes/portfolio.pdf"]
+
+# ---------------------------------------------------------------------------
+#  Respostas de triagem. A automacao casa o TEXTO DA PERGUNTA do formulario
+#  com os padroes (regex, case-insensitive) e preenche a resposta.
+#  A primeira regra que casar vence -> coloque as mais especificas em cima.
+# ---------------------------------------------------------------------------
+screening_answers:
+  - match: ["autoriza(c|ç)(a|ã)o para trabalhar", "work authorization", "legally authorized"]
+    answer: "Sim"
+  - match: ["visto|visa sponsorship|sponsorship"]
+    answer: "Sim, preciso de patrocinio de visto para trabalhar fora do Brasil"
+  - match: ["pretens(a|ã)o salarial", "salary expectation", "desired salary", "expected compensation"]
+    answer: "R$ 15.000 mensais (aberto a negociacao)"
+  - match: ["aviso pr(e|é)vio", "notice period", "quando pode come(c|ç)ar", "start date"]
+    answer: "30 dias"
+  - match: ["ingl(e|ê)s", "english level", "english proficiency"]
+    answer: "Avancado"
+  - match: ["pcd", "defici(e|ê)ncia", "disability"]
+    answer: "Nao"
+  - match: ["ra(c|ç)a|etnia|ethnicity"]
+    answer: "Prefiro nao informar"
+  - match: ["g(e|ê)nero|gender"]
+    answer: "Prefiro nao informar"
+  - match: ["veteran"]
+    answer: "I don't wish to answer"
+  - match: ["como (voce|você) (soube|conheceu)", "how did you hear"]
+    answer: "Site de carreiras da empresa"
+  - match: ["ja trabalhou (nesta|na) empresa", "previously employed", "former employee"]
+    answer: "Nao"
+  - match: ["parente|familiar na empresa|relative"]
+    answer: "Nao"
+  - match: ["disponibilidade para viagens", "willing to travel"]
+    answer: "Sim"
+  - match: ["mudan(c|ç)a de cidade", "relocate", "relocation"]
+    answer: "Sim"
+  - match: ["linkedin"]
+    answer: "https://www.linkedin.com/in/seu-perfil"
+  - match: ["github"]
+    answer: "https://github.com/thns7"
+  - match: ["por que|why do you want|motiva(c|ç)(a|ã)o"]
+    answer: >
+      Quero atuar em produtos de larga escala, com forte cultura de engenharia,
+      aplicando minha experiencia em Python, cloud e automacao.
+
+# Consentimentos LGPD/GDPR que os portais pedem (marcados como "aceitar")
+consents:
+  data_processing: true
+  talent_pool: true
+  terms_of_use: true
+  marketing_emails: false

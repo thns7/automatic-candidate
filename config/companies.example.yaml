@@ -1,0 +1,147 @@
+# =============================================================================
+#  Empresas alvo. Copie para config/companies.yaml:
+#      cp config/companies.example.yaml config/companies.yaml
+#
+#  IMPORTANTE: slugs/tenants de portais mudam com o tempo. Rode
+#      candidate sources verify
+#  para checar quais entradas estao respondendo, e ajuste o que falhar.
+#  O comando  candidate sources raw <empresa>  mostra o JSON cru do portal,
+#  util para descobrir o slug certo.
+# =============================================================================
+
+companies:
+
+  # ----------------------------- NVIDIA (Workday) -----------------------------
+  - key: nvidia
+    name: NVIDIA
+    enabled: true
+    tags: [ai, infra, us]
+    source:
+      type: workday
+      host: nvidia.wd5.myworkdayjobs.com
+      tenant: nvidia
+      site: NVIDIAExternalCareerSite
+      search_text: "software engineer"
+      locale: en-US
+    apply:
+      applier: workday
+      # Credenciais do portal ficam no .env (NVIDIA_EMAIL / NVIDIA_PASSWORD)
+      login_env_prefix: NVIDIA
+      allow_auto_submit: false
+    resume: default
+
+  # --------------------------- MICROSOFT (portal proprio) ---------------------
+  - key: microsoft
+    name: Microsoft
+    enabled: true
+    tags: [cloud, us]
+    source:
+      type: microsoft
+      query: "software engineer"
+      country: "Brazil"          # "" = mundo todo
+    apply:
+      applier: generic
+      login_env_prefix: MICROSOFT
+      allow_auto_submit: false
+      notes: >
+        Microsoft exige conta Microsoft logada. Rode  candidate login microsoft
+        uma vez; o perfil persistente do navegador guarda a sessao.
+    resume: default
+
+  # ------------------------------ GOOGLE (assistido) --------------------------
+  - key: google
+    name: Google
+    enabled: true
+    tags: [us, big-tech]
+    source:
+      type: manual
+      # Sem API publica estavel. A descoberta usa estas URLs de busca e o
+      # fluxo de candidatura e assistido (navegador abre, automacao preenche).
+      search_urls:
+        - "https://www.google.com/about/careers/applications/jobs/results?q=software%20engineer&location=Brazil"
+        - "https://www.google.com/about/careers/applications/jobs/results?q=software%20engineer&location=Sao%20Paulo"
+    apply:
+      applier: generic
+      login_env_prefix: GOOGLE
+      allow_auto_submit: false
+    resume: default
+
+  # ------------------------------- ITAU (Gupy) --------------------------------
+  - key: itau
+    name: Itau Unibanco
+    enabled: true
+    tags: [br, banco, fintech]
+    source:
+      type: gupy
+      # Portal de carreiras: https://vemproitau.gupy.io
+      board: vemproitau
+      query: "engenheiro de software"
+    apply:
+      applier: gupy
+      login_env_prefix: GUPY       # Gupy usa uma conta unica para todos os portais
+      allow_auto_submit: false
+    resume: default
+
+  # -------------------------------- ZAMP (Gupy) -------------------------------
+  - key: zamp
+    name: Zamp
+    enabled: true
+    tags: [br, fintech, startup]
+    source:
+      type: gupy
+      board: zamp
+      query: "engenheiro"
+    apply:
+      applier: gupy
+      login_env_prefix: GUPY
+      allow_auto_submit: false
+    resume: default
+
+  # --------------------- Exemplos de outros portais comuns --------------------
+  # Muitas empresas de tecnologia usam um destes; basta trocar o slug.
+
+  - key: nubank
+    name: Nubank
+    enabled: false
+    tags: [br, fintech]
+    source:
+      type: greenhouse
+      board: nubank              # https://boards.greenhouse.io/nubank
+    apply:
+      applier: greenhouse
+      allow_auto_submit: false
+    resume: default
+
+  - key: mercadolivre
+    name: Mercado Livre
+    enabled: false
+    tags: [latam]
+    source:
+      type: smartrecruiters
+      board: MercadoLibre
+    apply:
+      applier: generic
+      allow_auto_submit: false
+    resume: default
+
+  - key: exemplo-lever
+    name: Empresa no Lever
+    enabled: false
+    source:
+      type: lever
+      board: netflix             # https://jobs.lever.co/netflix
+    apply:
+      applier: lever
+      allow_auto_submit: false
+    resume: default
+
+  - key: exemplo-ashby
+    name: Empresa no Ashby
+    enabled: false
+    source:
+      type: ashby
+      board: ramp                # https://jobs.ashbyhq.com/ramp
+    apply:
+      applier: generic
+      allow_auto_submit: false
+    resume: default

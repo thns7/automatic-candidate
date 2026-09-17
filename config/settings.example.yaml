@@ -1,0 +1,107 @@
+# =============================================================================
+#  Como a automacao se comporta. Copie para config/settings.yaml e ajuste:
+#      cp config/settings.example.yaml config/settings.yaml
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+#  MODO DE ENVIO  (leia antes de mudar)
+#    dry_run : so descobre e mostra as vagas. Nao abre navegador. (padrao)
+#    review  : abre o navegador, PREENCHE tudo, tira screenshot e PARA.
+#              Voce revisa e confirma no terminal antes do submit. RECOMENDADO.
+#    auto    : preenche e envia sem confirmar. Exige tambem
+#              allow_auto_submit: true na empresa em companies.yaml.
+# ---------------------------------------------------------------------------
+submit_mode: review
+
+# Limites de seguranca (evitam spam, bloqueio de conta e erro em massa)
+limits:
+  max_applications_per_run: 5
+  max_applications_per_day: 15
+  max_per_company_per_day: 5
+  min_seconds_between_applications: 45
+  max_seconds_between_applications: 120
+
+# Navegador (usado nos modos review/auto)
+browser:
+  headless: false            # false = voce ve o que esta acontecendo (recomendado)
+  slow_mo_ms: 120            # atraso entre acoes; ajuda o site a acompanhar
+  timeout_ms: 45000
+  # Diretorio de perfil persistente: mantem seus logins (Workday, Gupy, MS)
+  # entre execucoes, entao voce loga uma vez por portal.
+  user_data_dir: "browser-profile"
+  screenshot_dir: "data/screenshots"
+  locale: "pt-BR"
+  viewport: { width: 1440, height: 900 }
+  # Opcional: usar um Chrome/Chromium ja instalado em vez do que o Playwright baixa.
+  # Tambem pode ser definido pela variavel PLAYWRIGHT_CHROMIUM_EXECUTABLE.
+  # executable_path: "/usr/bin/google-chrome"
+
+# Filtros de vaga aplicados na descoberta
+filters:
+  # Se a vaga NAO tiver nenhum destes termos no titulo, e descartada.
+  title_include:
+    - engineer
+    - engenheir
+    - developer
+    - desenvolvedor
+    - software
+    - backend
+    - back-end
+    - full stack
+    - fullstack
+    - platform
+    - data
+    - sre
+    - devops
+  # Se tiver qualquer um destes, e descartada.
+  title_exclude:
+    - intern
+    - estagi
+    - trainee
+    - manager
+    - gerente
+    - director
+    - diretor
+    - vp
+    - principal
+    - staff
+    - sales
+    - vendas
+    - recruit
+    - marketing
+    - designer
+    - qa manual
+  # Localidades aceitas (substring, case-insensitive). Vazio = qualquer lugar.
+  locations_include:
+    - brasil
+    - brazil
+    - sao paulo
+    - são paulo
+    - remote
+    - remoto
+    - latam
+  locations_exclude: []
+  # Palavras que valem pontos extras no ranking (nao filtram)
+  keywords_boost:
+    python: 3
+    kubernetes: 2
+    aws: 2
+    fastapi: 2
+    postgres: 1
+    remote: 2
+  min_score: 1               # score minimo para entrar na fila de candidatura
+  posted_within_days: 45     # 0 = sem limite de data
+
+# Onde guardar o historico de candidaturas
+storage:
+  database: "data/applications.sqlite3"
+  reports_dir: "data/reports"
+
+# Carta de apresentacao
+cover_letter:
+  enabled: true
+  attach_when_optional: false   # true = anexa mesmo quando o campo e opcional
+
+logging:
+  level: "INFO"                 # DEBUG mostra cada campo preenchido
+  file: "data/automatic-candidate.log"

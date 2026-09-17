@@ -1,0 +1,8 @@
+# Dependencias minimas (descoberta de vagas, filtros, relatorios, tracking)
+requests>=2.31
+PyYAML>=6.0
+Jinja2>=3.1
+
+# Necessario apenas para preencher formularios no navegador:
+#   pip install playwright && python -m playwright install chromium
+playwright>=1.44
