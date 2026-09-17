@@ -17,6 +17,7 @@ import re
 import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from automatic_candidate.config import Profile
 
@@ -70,15 +71,24 @@ NEUTRAL = (
 class AnswerBook:
     """Resolve campos de formulario a partir do perfil do usuario."""
 
-    def __init__(self, profile: Profile) -> None:
+    def __init__(
+        self, profile: Profile, extra_answers: list[dict[str, Any]] | None = None
+    ) -> None:
+        """extra_answers vem do cargo ativo (config/settings.yaml -> roles) e
+        entra na frente das regras do perfil: perguntas de estagio ganham de
+        respostas genericas."""
         self.profile = profile
-        self._rules = self._compile_screening_rules()
+        self._rules = self._compile_rules(extra_answers or []) + self._compile_screening_rules()
         self._builtin = self._build_builtin_table()
 
     # ------------------------------------------------------------------ setup
     def _compile_screening_rules(self) -> list[tuple[list[re.Pattern[str]], str]]:
+        return self._compile_rules(self.profile.screening_answers)
+
+    @staticmethod
+    def _compile_rules(entries: list[dict[str, Any]]) -> list[tuple[list[re.Pattern[str]], str]]:
         rules: list[tuple[list[re.Pattern[str]], str]] = []
-        for entry in self.profile.screening_answers:
+        for entry in entries:
             if not isinstance(entry, dict):
                 continue
             patterns_raw = entry.get("match") or []
@@ -136,8 +146,22 @@ class AnswerBook:
              lambda: str(p.get("professional.years_of_experience", "")),
              "professional.years_of_experience"),
             (r"\b(resumo|headline|about you|summary)", get("professional.headline"), "professional.headline"),
+            # academico (processos de estagio perguntam sempre)
+            (r"\b(previsao de (formatura|conclusao)|graduation date|quando se forma|formatura)",
+             lambda: str(p.get("education.0.expected_graduation", "")),
+             "education.expected_graduation"),
+            (r"\b(semestre|periodo do curso)",
+             lambda: str(p.get("education.0.current_semester", "")),
+             "education.current_semester"),
+            (r"\b(curso|graduacao)\b",
+             lambda: str(p.get("education.0.degree", "")), "education.degree"),
+            (r"\b(institui(c|ç)ao de ensino|universidade|faculdade|school|university)",
+             lambda: str(p.get("education.0.school", "")), "education.school"),
+            (r"\b(turno|periodo das aulas)",
+             lambda: str(p.get("education.0.shift", "")), "education.shift"),
             # salario
-            (r"\b(pretensao|salary|remuneracao|compensation|expected pay)", self._salary_answer, "compensation"),
+            (r"\b(pretensao|salary|remuneracao|compensation|expected pay)",
+             self._salary_answer, "compensation"),
         ]
         return [(re.compile(pattern, re.IGNORECASE), getter, origin) for pattern, getter, origin in table]
 

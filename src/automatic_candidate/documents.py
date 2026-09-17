@@ -15,7 +15,7 @@ from pathlib import Path
 
 from jinja2 import Environment, StrictUndefined, TemplateError
 
-from automatic_candidate.config import CompanyConfig, Profile, Settings
+from automatic_candidate.config import CompanyConfig, Profile, RoleProfile, Settings
 from automatic_candidate.models import JobPosting
 
 logger = logging.getLogger(__name__)
@@ -25,10 +25,19 @@ class DocumentError(RuntimeError):
     pass
 
 
-def resolve_resume(profile: Profile, company: CompanyConfig) -> Path:
-    """PDF do curriculo para esta empresa. Cai para 'default' se a variante nao existir."""
+def resolve_resume(
+    profile: Profile, company: CompanyConfig, role: RoleProfile | None = None
+) -> Path:
+    """PDF do curriculo a usar.
+
+    Precedencia: variante pedida pela empresa (quando ela pede algo diferente
+    de 'default') > variante do cargo ativo > 'default'. Assim a NVIDIA continua
+    recebendo o curriculo de ML, e todo o resto recebe o do cargo da vez.
+    """
     resumes = profile.get("documents.resumes", {}) or {}
     variant = company.resume or "default"
+    if variant == "default" and role and role.resume:
+        variant = role.resume
     raw = resumes.get(variant)
     if not raw:
         if variant != "default":

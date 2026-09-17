@@ -61,13 +61,18 @@ professional:
     - { name: "Ingles", level: "Avancado" }
     - { name: "Espanhol", level: "Basico" }
 
+# Processo de ESTAGIO sempre pergunta curso, semestre e previsao de formatura.
+# O primeiro item desta lista e o que a automacao usa para responder.
 education:
   - degree: "Bacharelado em Ciencia da Computacao"
     school: "Universidade Exemplo"
     field: "Ciencia da Computacao"
-    start_year: 2019
-    end_year: 2023
-    status: "completo"                # completo | cursando | trancado
+    start_year: 2024
+    end_year: 2028
+    status: "cursando"                # completo | cursando | trancado
+    current_semester: "5o semestre"   # usado nas perguntas de estagio
+    expected_graduation: "Dezembro de 2028"
+    shift: "Noturno"                  # turno das aulas (define sua disponibilidade)
 
 experience:
   - title: "Software Engineer"
@@ -98,6 +103,9 @@ compensation:
 documents:
   resumes:
     default: "data/resumes/curriculo.pdf"
+    # Variantes: o cargo ativo (config/settings.yaml -> roles) escolhe qual usar.
+    # O cargo "estagio" do exemplo pede a chave 'estagio'.
+    estagio: "data/resumes/curriculo-estagio.pdf"
     # en: "data/resumes/resume-en.pdf"
     # ai: "data/resumes/curriculo-ml.pdf"
   cover_letter_template: "templates/cover_letter.md.j2"

@@ -36,7 +36,140 @@ browser:
   # Tambem pode ser definido pela variavel PLAYWRIGHT_CHROMIUM_EXECUTABLE.
   # executable_path: "/usr/bin/google-chrome"
 
-# Filtros de vaga aplicados na descoberta
+# ---------------------------------------------------------------------------
+#  CARGO ALVO
+#  O bloco 'filters' abaixo e a base. Cada cargo aqui SUBSTITUI as chaves que
+#  declarar (nao soma) — um perfil de estagio precisa poder apagar "estagi" do
+#  title_exclude herdado.
+#
+#  Qual cargo vale: o primeiro cuja janela de datas cobre HOJE.
+#  Assim a busca vira sozinha na virada do ano, sem voce mexer em nada.
+#
+#  active_role: "auto"  -> decide pela data (recomendado)
+#  active_role: "junior" -> trava neste cargo, ignorando as datas
+#  Para espiar o futuro sem mudar nada:  candidate discover --role junior
+#  Vai estagiar mais tempo? mude o valid_until do cargo "estagio" e pronto.
+#  Para ver qual esta valendo e quando troca:  candidate roles
+# ---------------------------------------------------------------------------
+active_role: auto
+
+roles:
+  - name: estagio
+    description: "Estagio em tecnologia"
+    valid_until: "2027-12-31"        # estagio agora e durante todo o 2027
+    resume: estagio                  # usa documents.resumes.estagio, se existir
+    filters:
+      title_include:
+        - estagi
+        - estági
+        - intern
+        - internship
+        - aprendiz
+      title_exclude:                 # cuidado: substitui a lista base inteira
+        - senior
+        - sênior
+        - pleno
+        - especialista
+        - manager
+        - gerente
+        - coordenador
+        - lead
+        - vendas
+        - sales
+        - comercial
+        - juridico
+        - jurídico
+        - rh
+      keywords_boost:
+        python: 3
+        desenvolvimento: 2
+        software: 2
+        dados: 2
+        backend: 2
+        remoto: 2
+      posted_within_days: 30         # estagio enche rapido; vaga velha ja era
+    # Perguntas que so aparecem em processo de estagio.
+    # Tem prioridade sobre as screening_answers do profile.yaml.
+    screening_answers:
+      - match: ["previs(a|ã)o de (formatura|conclus(a|ã)o)", "graduation date", "quando (voce|você) se forma"]
+        answer: "Dezembro de 2028"
+      - match: ["semestre|per(i|í)odo do curso|qual per(i|í)odo"]
+        answer: "5º semestre"
+      - match: ["curso|gradua(c|ç)(a|ã)o em que|qual curso"]
+        answer: "Ciencia da Computacao"
+      - match: ["institui(c|ç)(a|ã)o de ensino|universidade|faculdade"]
+        answer: "Universidade Exemplo"
+      - match: ["turno|per(i|í)odo dispon(i|í)vel|disponibilidade de hor(a|á)rio"]
+        answer: "Manha e tarde (6 horas diarias)"
+      - match: ["matriculad|est(a|á) cursando|comprova(c|ç)(a|ã)o de matr(i|í)cula"]
+        answer: "Sim, matriculado e cursando"
+      - match: ["pretens(a|ã)o salarial|bolsa[- ]?aux(i|í)lio|expectativa de bolsa"]
+        answer: "Compativel com a bolsa oferecida pelo programa"
+
+  - name: junior
+    description: "Desenvolvedor junior / entry level"
+    valid_from: "2028-01-01"         # entra em vigor sozinho em 01/01/2028
+    valid_until: "2029-12-31"
+    resume: default
+    filters:
+      title_include:
+        - junior
+        - júnior
+        - " jr"
+        - engenheir
+        - engineer
+        - desenvolvedor
+        - developer
+        - software
+        - backend
+        - entry level
+      title_exclude:
+        - estagi
+        - estági
+        - intern
+        - trainee
+        - senior
+        - sênior
+        - staff
+        - principal
+        - manager
+        - gerente
+        - director
+        - diretor
+      keywords_boost:
+        python: 3
+        kubernetes: 2
+        aws: 2
+        fastapi: 2
+        remoto: 2
+      posted_within_days: 45
+
+  - name: pleno
+    description: "Desenvolvedor pleno"
+    valid_from: "2030-01-01"         # daqui a alguns anos; ajuste quando chegar la
+    resume: default
+    filters:
+      title_include:
+        - pleno
+        - engenheir
+        - engineer
+        - desenvolvedor
+        - developer
+        - software
+        - backend
+      title_exclude:
+        - estagi
+        - intern
+        - trainee
+        - junior
+        - júnior
+        - manager
+        - gerente
+        - diretor
+      posted_within_days: 60
+
+# Filtros base, usados quando nenhum cargo declara a chave.
+# O cargo ativo acima SUBSTITUI as chaves que ele declarar.
 filters:
   # Se a vaga NAO tiver nenhum destes termos no titulo, e descartada.
   title_include:

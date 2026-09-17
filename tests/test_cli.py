@@ -98,3 +98,27 @@ def test_export_csv(projeto):
     main(["init"])
     assert main(["export", "--format", "csv"]) == 0
     assert (projeto / "data" / "reports" / "candidaturas.csv").exists()
+
+
+def test_roles_mostra_cargo_ativo_e_proxima_troca(projeto, capsys):
+    main(["init"])
+    assert main(["roles"]) == 0
+    saida = capsys.readouterr().out
+    assert ">> estagio" in saida
+    assert "proxima troca: junior" in saida
+
+
+def test_answers_usa_as_respostas_do_cargo_ativo(projeto, capsys):
+    main(["init"])
+    main(["answers", "Qual a previsao de formatura?"])
+    saida = capsys.readouterr().out
+    assert "cargo ativo: estagio" in saida
+    assert "2028" in saida
+
+
+def test_role_forcado_pela_linha_de_comando(projeto, capsys):
+    main(["init"])
+    main(["answers", "Qual sua pretensao salarial?", "--role", "junior"])
+    saida = capsys.readouterr().out
+    assert "cargo ativo: junior" in saida
+    assert "bolsa" not in saida.lower()

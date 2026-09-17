@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from automatic_candidate.answers import AnswerBook
 from automatic_candidate.appliers import ApplyContext, build_applier
 from automatic_candidate.browser import BrowserSession
-from automatic_candidate.config import AppConfig, CompanyConfig
+from automatic_candidate.config import AppConfig, CompanyConfig, RoleProfile
 from automatic_candidate.documents import (
     DocumentError,
     extra_attachments,
@@ -43,10 +43,17 @@ def discover(
     company_keys: list[str] | None = None,
     per_company_limit: int = 200,
     store: ApplicationStore | None = None,
+    role: RoleProfile | None = None,
 ) -> DiscoveryReport:
-    """Busca vagas nos portais das empresas habilitadas e aplica os filtros."""
+    """Busca vagas nos portais das empresas habilitadas e aplica os filtros.
+
+    'role' e o cargo alvo em vigor: os filtros dele substituem os da base.
+    """
     http = HttpClient()
     report = DiscoveryReport()
+    filters = config.settings.effective_filters(role)
+    if role is not None:
+        logger.info("cargo alvo: %s (%s)", role.name, role.description or role.window_label())
 
     for company in config.enabled_companies(company_keys):
         try:
@@ -60,7 +67,7 @@ def discover(
         report.seen += len(postings)
         kept_here = 0
         for job in postings:
-            decision = evaluate(job, config.settings.filters, config.profile)
+            decision = evaluate(job, filters, config.profile)
             job.score = decision.score
             if not decision.keep:
                 report.rejected.append((job, decision.reason))
@@ -92,6 +99,7 @@ def run_applications(
     store: ApplicationStore,
     limit: int | None = None,
     force: bool = False,
+    role: RoleProfile | None = None,
 ) -> RunReport:
     """Percorre a fila de vagas preenchendo (e opcionalmente enviando)."""
     settings = config.settings
@@ -113,7 +121,7 @@ def run_applications(
         logger.info("nenhuma vaga nova para trabalhar.")
         return report
 
-    answers = AnswerBook(config.profile)
+    answers = AnswerBook(config.profile, extra_answers=role.screening_answers if role else None)
     attachments = tuple(extra_attachments(config.profile))
     browser = BrowserSession(settings.browser)
     per_company_done: dict[str, int] = {}
@@ -129,7 +137,9 @@ def run_applications(
 
             company = config.company(job.company_key)
             try:
-                context = _build_context(config, company, job, answers, browser, attachments)
+                context = _build_context(
+                    config, company, job, answers, browser, attachments, role
+                )
             except DocumentError as exc:
                 logger.error("%s", exc)
                 report.skipped.append((job, str(exc)))
@@ -187,8 +197,9 @@ def _build_context(
     answers: AnswerBook,
     browser: BrowserSession,
     attachments: tuple,
+    role: RoleProfile | None = None,
 ) -> ApplyContext:
-    resume = resolve_resume(config.profile, company)
+    resume = resolve_resume(config.profile, company, role)
     cover = None
     if config.settings.cover_letter_enabled:
         try:

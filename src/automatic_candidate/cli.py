@@ -138,12 +138,15 @@ def cmd_discover(args: argparse.Namespace) -> int:
     from automatic_candidate.storage import ApplicationStore
 
     config = _load(args)
+    role = config.settings.resolve_role(override=getattr(args, "role", None))
+    _announce_role(config, role)
     store = ApplicationStore(config.settings.database)
     report = discover(
         config,
         company_keys=args.company or None,
         per_company_limit=args.per_company,
         store=store,
+        role=role,
     )
     print_discovery(report, show_rejected=args.show_rejected)
 
@@ -192,9 +195,15 @@ def cmd_apply(args: argparse.Namespace) -> int:
         print("\n(use --force para ignorar, por sua conta e risco)")
         return 1
 
+    role = config.settings.resolve_role(override=getattr(args, "role", None))
+    _announce_role(config, role)
     store = ApplicationStore(config.settings.database)
     report = discover(
-        config, company_keys=args.company or None, per_company_limit=args.per_company, store=store
+        config,
+        company_keys=args.company or None,
+        per_company_limit=args.per_company,
+        store=store,
+        role=role,
     )
     print_discovery(report)
     if not report.jobs:
@@ -210,7 +219,9 @@ def cmd_apply(args: argparse.Namespace) -> int:
             print("cancelado.")
             return 0
 
-    run = run_applications(config, report.jobs, store, limit=args.limit, force=args.force)
+    run = run_applications(
+        config, report.jobs, store, limit=args.limit, force=args.force, role=role
+    )
     print_run(run)
     return 0
 
@@ -331,7 +342,10 @@ def cmd_answers(args: argparse.Namespace) -> int:
     from automatic_candidate.answers import AnswerBook, FormField
 
     config = _load(args)
-    book = AnswerBook(config.profile)
+    role = config.settings.resolve_role(override=getattr(args, "role", None))
+    book = AnswerBook(config.profile, extra_answers=role.screening_answers if role else None)
+    if role is not None:
+        print(f"(cargo ativo: {role.name})")
     for question in args.question:
         field = FormField(label=question, kind=args.kind, options=args.option or [])
         answer = book.resolve(field)
@@ -345,9 +359,59 @@ def cmd_answers(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_roles(args: argparse.Namespace) -> int:
+    """Mostra os cargos configurados, qual esta valendo e quando troca."""
+    from datetime import date
+
+    config = _load(args)
+    settings = config.settings
+    if not settings.roles:
+        print(
+            "Nenhum cargo configurado — a busca usa o bloco 'filters' de "
+            "config/settings.yaml para tudo.\n"
+            "Para mirar em estagio agora e outro cargo mais tarde, copie o bloco "
+            "'roles' de config/settings.example.yaml."
+        )
+        return 0
+
+    hoje = date.today()
+    ativo = settings.resolve_role(hoje)
+    print(f"hoje: {hoje.isoformat()}   (active_role: {settings.active_role})\n")
+    for role in settings.roles:
+        marca = ">>" if ativo is not None and role.name == ativo.name else "  "
+        filtros = settings.effective_filters(role)
+        titulos = ", ".join(filtros.title_include[:5]) or "(qualquer titulo)"
+        print(f"{marca} {role.name:<10} {role.window_label():<26} {role.description}")
+        print(f"      titulos: {titulos}")
+        if role.resume:
+            print(f"      curriculo: documents.resumes.{role.resume}")
+        if role.screening_answers:
+            print(f"      +{len(role.screening_answers)} resposta(s) de triagem so deste cargo")
+
+    if ativo is None:
+        print("\nNenhum cargo cobre a data de hoje — a busca cai no bloco 'filters' base.")
+    proximo = settings.next_role_after(hoje)
+    if proximo is not None and proximo.valid_from is not None:
+        faltam = (proximo.valid_from - hoje).days
+        print(
+            f"\nproxima troca: {proximo.name} em {proximo.valid_from.isoformat()} "
+            f"(em {faltam} dias) — automatica, voce nao precisa fazer nada."
+        )
+    return 0
+
+
 # --------------------------------------------------------------------------- #
 # infra
 # --------------------------------------------------------------------------- #
+def _announce_role(config: AppConfig, role) -> None:
+    if role is None:
+        if config.settings.roles:
+            print("(nenhum cargo cobre a data de hoje; usando os filtros base)")
+        return
+    print(f"(cargo alvo: {role.name} — {role.description or role.window_label()})")
+
+
+
 def _load(args: argparse.Namespace) -> AppConfig:
     config = load_config(Path(getattr(args, "config_dir", CONFIG_DIR)))
     if getattr(args, "verbose", False):
@@ -380,6 +444,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_discover.add_argument("--per-company", type=int, default=200, help="maximo de vagas por empresa")
     p_discover.add_argument("--show-rejected", type=int, default=0, help="mostra N vagas descartadas")
     p_discover.add_argument("--json", help="salva o resultado neste arquivo JSON")
+    p_discover.add_argument("--role", help="forca um cargo de config/settings.yaml (ex: junior)")
     p_discover.set_defaults(func=cmd_discover)
 
     p_apply = sub.add_parser("apply", help="preenche (e opcionalmente envia) as candidaturas")
@@ -389,7 +454,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_apply.add_argument("--mode", choices=[m.value for m in SubmitMode], help="sobrescreve submit_mode")
     p_apply.add_argument("--force", action="store_true", help="ignora dedupe, limites e validacao")
     p_apply.add_argument("--yes", action="store_true", help="nao pergunta ao entrar no modo auto")
+    p_apply.add_argument("--role", help="forca um cargo de config/settings.yaml (ex: junior)")
     p_apply.set_defaults(func=cmd_apply)
+
+    p_roles = sub.add_parser("roles", help="mostra os cargos alvo e quando cada um entra em vigor")
+    p_roles.set_defaults(func=cmd_roles)
 
     p_status = sub.add_parser("status", help="mostra o historico de candidaturas")
     p_status.add_argument("--limit", type=int, default=20)
@@ -418,6 +487,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_answers.add_argument("question", nargs="+")
     p_answers.add_argument("--kind", default="text", help="text|select|radio|checkbox")
     p_answers.add_argument("--option", action="append", help="opcao do select/radio (repita)")
+    p_answers.add_argument("--role", help="testa com as respostas de um cargo especifico")
     p_answers.set_defaults(func=cmd_answers)
 
     return parser

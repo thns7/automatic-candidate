@@ -9,9 +9,11 @@ E o .env, para segredos referenciados como ${VAR} dentro dos YAMLs.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +28,8 @@ COMPANIES_FILE = CONFIG_DIR / "companies.yaml"
 ENV_FILE = Path(".env")
 
 _ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigError(RuntimeError):
@@ -94,11 +98,19 @@ class Profile:
 
     # --- atalhos de leitura ------------------------------------------------ #
     def get(self, dotted: str, default: Any = "") -> Any:
+        """Leitura por caminho pontilhado.
+
+        Aceita indice numerico em lista: 'education.0.school' pega a formacao
+        mais recente, que e o que os formularios de estagio perguntam.
+        """
         node: Any = self.data
         for part in dotted.split("."):
-            if not isinstance(node, dict) or part not in node:
+            if isinstance(node, dict) and part in node:
+                node = node[part]
+            elif isinstance(node, list) and part.isdigit() and int(part) < len(node):
+                node = node[int(part)]
+            else:
                 return default
-            node = node[part]
         return node if node is not None else default
 
     @property
@@ -188,6 +200,63 @@ class Filters:
     min_score: int = 0
     posted_within_days: int = 0
 
+    def merged_with(self, overrides: dict[str, Any]) -> Filters:
+        """Aplica os overrides de um perfil de cargo, campo a campo.
+
+        Cada chave presente SUBSTITUI a do filtro base (nao soma): um perfil de
+        estagio precisa poder remover 'estagi' do title_exclude herdado.
+        """
+        if not overrides:
+            return self
+        known = {f for f in Filters.__slots__}
+        unknown = set(overrides) - known
+        if unknown:
+            logger.warning(
+                "filtros desconhecidos no perfil de cargo, ignorados: %s", ", ".join(sorted(unknown))
+            )
+        changes: dict[str, Any] = {}
+        for key in ("title_include", "title_exclude", "locations_include", "locations_exclude"):
+            if key in overrides:
+                changes[key] = [str(v).lower() for v in (overrides[key] or [])]
+        if "keywords_boost" in overrides:
+            changes["keywords_boost"] = {
+                str(k).lower(): int(v) for k, v in (overrides["keywords_boost"] or {}).items()
+            }
+        for key in ("min_score", "posted_within_days"):
+            if key in overrides:
+                changes[key] = int(overrides[key])
+        return replace(self, **changes)
+
+
+@dataclass(slots=True)
+class RoleProfile:
+    """Um cargo alvo com janela de validade.
+
+    Serve para a busca mudar sozinha com o tempo: estagio agora, junior a
+    partir de 2027. O perfil ativo e o primeiro cuja janela cobre a data de
+    hoje (ou o escolhido a mao em active_role / --role).
+    """
+
+    name: str
+    description: str = ""
+    valid_from: date | None = None
+    valid_until: date | None = None
+    filters: dict[str, Any] = field(default_factory=dict)
+    resume: str = ""
+    screening_answers: list[dict[str, Any]] = field(default_factory=list)
+
+    def is_active_on(self, today: date) -> bool:
+        if self.valid_from and today < self.valid_from:
+            return False
+        if self.valid_until and today > self.valid_until:
+            return False
+        return True
+
+    def window_label(self) -> str:
+        inicio = self.valid_from.isoformat() if self.valid_from else "sempre"
+        fim = self.valid_until.isoformat() if self.valid_until else "sem prazo"
+        return f"{inicio} ate {fim}"
+
 
 @dataclass(slots=True)
 class Limits:
@@ -217,6 +286,8 @@ class Settings:
     limits: Limits = field(default_factory=Limits)
     browser: BrowserSettings = field(default_factory=BrowserSettings)
     filters: Filters = field(default_factory=Filters)
+    roles: list[RoleProfile] = field(default_factory=list)
+    active_role: str = "auto"
     database: Path = Path("data/applications.sqlite3")
     reports_dir: Path = Path("data/reports")
     cover_letter_enabled: bool = True
@@ -224,6 +295,92 @@ class Settings:
     log_level: str = "INFO"
     log_file: Path | None = Path("data/automatic-candidate.log")
     path: Path = SETTINGS_FILE
+
+    # ------------------------------------------------------------ cargo alvo
+    def resolve_role(
+        self, today: date | None = None, override: str | None = None
+    ) -> RoleProfile | None:
+        """Perfil de cargo em vigor: --role > active_role > janela de datas."""
+        if not self.roles:
+            return None
+        chosen = (override or "").strip() or (
+            self.active_role if self.active_role not in ("", "auto") else ""
+        )
+        if chosen:
+            for role in self.roles:
+                if role.name == chosen:
+                    return role
+            known = ", ".join(r.name for r in self.roles)
+            raise ConfigError(f"cargo desconhecido: {chosen!r}. Disponiveis: {known}")
+
+        today = today or date.today()
+        for role in self.roles:
+            if role.is_active_on(today):
+                return role
+        return None
+
+    def effective_filters(self, role: RoleProfile | None) -> Filters:
+        return self.filters.merged_with(role.filters) if role else self.filters
+
+    def next_role_after(self, today: date | None = None) -> RoleProfile | None:
+        """Proximo cargo a entrar em vigor — usado para avisar sobre a troca."""
+        today = today or date.today()
+        futuros = [
+            role for role in self.roles if role.valid_from and role.valid_from > today
+        ]
+        return min(futuros, key=lambda r: r.valid_from or date.max) if futuros else None
+
+
+def _parse_date(value: Any, field_name: str, role_name: str) -> date | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value).strip())
+    except ValueError as exc:
+        raise ConfigError(
+            f"cargo {role_name!r}: '{field_name}' precisa estar no formato AAAA-MM-DD "
+            f"(recebi {value!r})"
+        ) from exc
+
+
+def _parse_roles(raw: Any) -> list[RoleProfile]:
+    if not raw:
+        return []
+    if not isinstance(raw, list):
+        raise ConfigError("config/settings.yaml: 'roles' deve ser uma lista de cargos.")
+
+    roles: list[RoleProfile] = []
+    seen: set[str] = set()
+    for index, item in enumerate(raw, start=1):
+        if not isinstance(item, dict):
+            raise ConfigError(f"config/settings.yaml: cargo #{index} deveria ser um mapeamento.")
+        name = str(item.get("name") or "").strip()
+        if not name:
+            raise ConfigError(f"config/settings.yaml: cargo #{index} esta sem 'name'.")
+        if name in seen:
+            raise ConfigError(f"config/settings.yaml: cargo duplicado: {name!r}")
+        seen.add(name)
+
+        valid_from = _parse_date(item.get("valid_from"), "valid_from", name)
+        valid_until = _parse_date(item.get("valid_until"), "valid_until", name)
+        if valid_from and valid_until and valid_from > valid_until:
+            raise ConfigError(
+                f"cargo {name!r}: 'valid_from' ({valid_from}) e depois de 'valid_until' ({valid_until})"
+            )
+        roles.append(
+            RoleProfile(
+                name=name,
+                description=str(item.get("description") or ""),
+                valid_from=valid_from,
+                valid_until=valid_until,
+                filters=dict(item.get("filters") or {}),
+                resume=str(item.get("resume") or ""),
+                screening_answers=list(item.get("screening_answers") or []),
+            )
+        )
+    return roles
 
 
 def load_settings(path: Path = SETTINGS_FILE) -> Settings:
@@ -267,6 +424,8 @@ def load_settings(path: Path = SETTINGS_FILE) -> Settings:
             min_score=int(filters_raw.get("min_score", 0)),
             posted_within_days=int(filters_raw.get("posted_within_days", 0)),
         ),
+        roles=_parse_roles(data.get("roles")),
+        active_role=str(data.get("active_role", "auto") or "auto"),
         database=Path(str(storage_raw.get("database", "data/applications.sqlite3"))),
         reports_dir=Path(str(storage_raw.get("reports_dir", "data/reports"))),
         cover_letter_enabled=bool(cover_raw.get("enabled", True)),

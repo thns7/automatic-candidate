@@ -67,7 +67,7 @@ def no_browser(monkeypatch, tmp_path):
     resume.write_bytes(b"%PDF")
     monkeypatch.setattr(pipeline, "BrowserSession", FakeBrowser)
     monkeypatch.setattr(pipeline, "build_applier", lambda name, ctx: FakeApplier(ctx))
-    monkeypatch.setattr(pipeline, "resolve_resume", lambda profile, company: resume)
+    monkeypatch.setattr(pipeline, "resolve_resume", lambda profile, company, role=None: resume)
     monkeypatch.setattr(pipeline, "write_cover_letter", lambda p, s, j: None)
     return resume
 
@@ -136,3 +136,27 @@ def test_force_ignora_o_dedupe(config, no_browser):
     pipeline.run_applications(config, [job], store)
     de_novo = pipeline.run_applications(config, [job], store, force=True)
     assert de_novo.count(ApplyStatus.SUBMITTED) == 1
+
+
+def test_discover_usa_os_filtros_do_cargo_ativo(config, monkeypatch):
+    """Com o cargo de estagio, vaga de estagio passa e vaga efetiva nao."""
+    from datetime import date
+
+    from automatic_candidate.config import RoleProfile
+
+    jobs = [
+        make_job("Estagio em Desenvolvimento de Software", external_id="1"),
+        make_job("Desenvolvedor Backend Junior", external_id="2"),
+    ]
+    monkeypatch.setattr(pipeline, "build_source", lambda c, h: FakeSource(jobs))
+
+    estagio = RoleProfile(
+        name="estagio",
+        valid_until=date(2027, 12, 31),
+        filters={"title_include": ["estagi", "intern"], "title_exclude": ["senior", "junior"]},
+    )
+    report = pipeline.discover(config, role=estagio)
+    assert [j.title for j in report.jobs] == ["Estagio em Desenvolvimento de Software"]
+
+    sem_cargo = pipeline.discover(config)
+    assert [j.title for j in sem_cargo.jobs] == ["Desenvolvedor Backend Junior"]

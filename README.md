@@ -121,6 +121,85 @@ documents:
 
 ---
 
+## Cargo alvo (e a troca automática no futuro)
+
+Hoje você quer **estágio em tecnologia**; mais para frente vai querer outra
+coisa. Em vez de reescrever os filtros quando chegar a hora, você declara os
+cargos com **janela de validade** em `config/settings.yaml`, e o que vale é o
+primeiro cuja janela cobre a data de hoje:
+
+```yaml
+active_role: auto        # decide pela data; ou trave num cargo: active_role: junior
+
+roles:
+  - name: estagio
+    description: "Estagio em tecnologia"
+    valid_until: "2027-12-31"      # vale agora e durante todo o 2027
+    resume: estagio                # usa documents.resumes.estagio
+    filters:
+      title_include: [estagi, estági, intern, internship, aprendiz]
+      title_exclude: [senior, pleno, manager, vendas, rh, ...]
+      posted_within_days: 30       # estágio enche rápido
+    screening_answers:             # perguntas que só aparecem em estágio
+      - match: ["previs(a|ã)o de (formatura|conclus(a|ã)o)", "graduation date"]
+        answer: "Dezembro de 2028"
+
+  - name: junior
+    valid_from: "2028-01-01"       # entra em vigor sozinho, sem você mexer
+    valid_until: "2029-12-31"
+    filters:
+      title_include: [junior, júnior, engenheir, developer, backend]
+      title_exclude: [estagi, intern, trainee, senior, manager]
+
+  - name: pleno
+    valid_from: "2030-01-01"
+```
+
+Para ver o que está valendo e quando muda:
+
+```console
+$ candidate roles
+hoje: 2026-09-17   (active_role: auto)
+
+>> estagio    sempre ate 2027-12-31      Estagio em tecnologia
+      titulos: estagi, estági, intern, internship, aprendiz
+      curriculo: documents.resumes.estagio
+      +7 resposta(s) de triagem so deste cargo
+   junior     2028-01-01 ate 2029-12-31  Desenvolvedor junior / entry level
+   pleno      2030-01-01 ate sem prazo   Desenvolvedor pleno
+
+proxima troca: junior em 2028-01-01 (em 471 dias) — automatica, voce nao precisa fazer nada.
+```
+
+**Vai estagiar por mais tempo?** Mude só o `valid_until` do cargo `estagio`.
+**Quer espiar o futuro** sem alterar nada: `candidate discover --role junior`.
+
+### Como um cargo muda a busca
+
+| O que o cargo define | Efeito |
+|---|---|
+| `filters` | **Substitui** as chaves que declarar no bloco `filters` base — não soma. É o que permite o perfil de estágio apagar o `estagi` da lista de exclusão herdada. Chave não declarada continua herdada. |
+| `resume` | Variante de currículo (`documents.resumes.<nome>`). Um pedido explícito da empresa em `companies.yaml` ainda vence. |
+| `screening_answers` | Respostas que entram **na frente** das do `profile.yaml` — a pretensão salarial vira "compatível com a bolsa" enquanto o cargo for estágio. |
+
+### Dados acadêmicos
+
+Processo de estágio sempre pergunta curso, semestre e previsão de formatura. Isso
+sai do primeiro item de `education` no `config/profile.yaml`, sem precisar de
+regra nenhuma:
+
+```yaml
+education:
+  - degree: "Bacharelado em Ciencia da Computacao"
+    school: "Universidade Exemplo"
+    status: "cursando"
+    current_semester: "5o semestre"
+    expected_graduation: "Dezembro de 2028"
+    shift: "Noturno"
+```
+
+---
+
 ## Empresas e portais
 
 Empresa grande quase nunca tem "API de candidatura". O que existe é o portal de
@@ -213,6 +292,8 @@ candidate doctor                        # confere config, currículo e dependên
 candidate discover                      # busca e filtra vagas (não envia nada)
 candidate discover -c itau -c nvidia    # só nestas empresas
 candidate discover --show-rejected 20   # mostra também o que foi descartado e por quê
+candidate roles                         # cargos alvo, qual vale hoje e quando troca
+candidate discover --role junior        # espia outro cargo sem mudar a configuração
 candidate apply --limit 3               # preenche e pede confirmação
 candidate apply --mode dry_run          # sobrescreve o modo desta execução
 candidate status                        # histórico de candidaturas
@@ -257,7 +338,7 @@ sources/*     ──►    matching.py        ──►   appliers/*        ─�
 ```bash
 pip install -e ".[dev,browser]"
 python -m playwright install chromium
-pytest -q          # 73 testes
+pytest -q          # 100 testes
 ruff check src tests
 ```
 
