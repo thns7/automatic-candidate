@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "automatic-candidate"
 version = "0.1.0"
-description = "Automacao pessoal de busca e candidatura a vagas de engenharia de software"
+description = "Busca vagas nos portais de carreira e preenche as candidaturas"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

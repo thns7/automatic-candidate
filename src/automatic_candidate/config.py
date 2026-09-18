@@ -29,6 +29,9 @@ ENV_FILE = Path(".env")
 
 _ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
+#: dominios usados nos modelos; se sobrarem no perfil, e porque nao foi editado
+PLACEHOLDER_EMAIL_DOMAINS = ("@exemplo.com", "@example.com", "@exemplo.com.br")
+
 logger = logging.getLogger(__name__)
 
 
@@ -164,10 +167,13 @@ class Profile:
             if not str(self.get(dotted)).strip():
                 problems.append(f"{self.path}: preencha '{dotted}' ({label})")
 
-        email = str(self.get("personal.email"))
-        if email and ("@" not in email or email.startswith("seu.email@")):
+        email = str(self.get("personal.email")).strip().lower()
+        if email and "@" not in email:
+            problems.append(f"{self.path}: 'personal.email' nao parece um e-mail valido")
+        elif email.endswith(PLACEHOLDER_EMAIL_DOMAINS):
             problems.append(
-                f"{self.path}: 'personal.email' ainda esta com o valor de exemplo"
+                f"{self.path}: 'personal.email' ainda esta com o e-mail de exemplo "
+                "— troque pelo seu"
             )
 
         resume = self.resume_path()

@@ -56,3 +56,25 @@ def test_submit_mode_invalido():
 def test_perfil_exemplo_acusa_pendencias(example_profile):
     problems = example_profile.validate()
     assert any("email" in p for p in problems)
+
+
+def test_email_de_exemplo_e_acusado(example_profile):
+    """Quem clona e esquece de editar nao pode se candidatar com o e-mail modelo."""
+    problems = example_profile.validate()
+    assert any("e-mail de exemplo" in p for p in problems)
+
+
+def test_email_proprio_passa(example_profile):
+    from automatic_candidate.config import Profile
+
+    dados = dict(example_profile.data)
+    dados["personal"] = {**dados["personal"], "email": "pessoa@dominio.com.br"}
+    problems = Profile(dados).validate()
+    assert not any("e-mail" in p for p in problems)
+
+
+def test_email_sem_arroba_e_acusado():
+    from automatic_candidate.config import Profile
+
+    problems = Profile({"personal": {"email": "nao-e-email"}}).validate()
+    assert any("nao parece um e-mail valido" in p for p in problems)
