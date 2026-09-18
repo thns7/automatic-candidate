@@ -17,7 +17,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 USER_AGENT = (
-    "automatic-candidate/0.1 (uso pessoal; +https://github.com/thns7/automatic-candidate)"
+    "automatic-candidate/0.1 (+https://github.com/thns7/automatic-candidate)"
 )
 RETRY_STATUS = {429, 500, 502, 503, 504}
 

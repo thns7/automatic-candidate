@@ -5,7 +5,7 @@ from automatic_candidate.answers import AnswerBook, FormField, redact
 
 def test_campos_basicos_vem_do_perfil(example_profile):
     book = AnswerBook(example_profile)
-    assert book.resolve(FormField(label="Nome completo")).value == "Thiago Nascimento"
+    assert book.resolve(FormField(label="Nome completo")).value == "Seu Nome Completo"
     assert "@" in book.resolve(FormField(label="E-mail *", kind="email")).value
     assert book.resolve(FormField(label="Telefone celular", kind="tel")).value.startswith("+55")
     assert book.resolve(FormField(label="Cidade")).value == "Sao Paulo"

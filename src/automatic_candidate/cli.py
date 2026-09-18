@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import shutil
 import sys
 import webbrowser
@@ -423,7 +424,7 @@ def _load(args: argparse.Namespace) -> AppConfig:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="candidate",
-        description="Automacao pessoal de candidatura a vagas de engenharia de software.",
+        description="Busca vagas nos portais de carreira e preenche as candidaturas.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -504,6 +505,14 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("\ninterrompido.", file=sys.stderr)
         return 130
+    except BrokenPipeError:
+        # Saida fechada do outro lado (ex.: `candidate roles | head`).
+        # Redireciona para devnull para o interpretador nao reclamar no shutdown.
+        try:
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except OSError:
+            pass
+        return 0
 
 
 if __name__ == "__main__":  # pragma: no cover

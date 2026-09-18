@@ -10,10 +10,10 @@
 # =============================================================================
 
 personal:
-  first_name: "Thiago"
-  last_name: "Nascimento"
-  full_name: "Thiago Nascimento"
-  email: "seu.email@exemplo.com"
+  first_name: "Seu"
+  last_name: "Nome"
+  full_name: "Seu Nome Completo"
+  email: "voce@exemplo.com"
   phone: "+55 11 99999-9999"          # formato internacional evita rejeicao de mascara
   phone_country_code: "+55"
   birth_date: "1999-01-31"            # usado por portais BR (Gupy); deixe "" se nao quiser
@@ -36,7 +36,7 @@ location:
 
 links:
   linkedin: "https://www.linkedin.com/in/seu-perfil"
-  github: "https://github.com/thns7"
+  github: "https://github.com/seu-usuario"
   portfolio: "https://seusite.dev"
   website: ""
   other: ""
@@ -148,7 +148,7 @@ screening_answers:
   - match: ["linkedin"]
     answer: "https://www.linkedin.com/in/seu-perfil"
   - match: ["github"]
-    answer: "https://github.com/thns7"
+    answer: "https://github.com/seu-usuario"
   - match: ["por que|why do you want|motiva(c|ç)(a|ã)o"]
     answer: >
       Quero atuar em produtos de larga escala, com forte cultura de engenharia,

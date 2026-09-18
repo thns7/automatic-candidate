@@ -59,8 +59,10 @@ def test_doctor_passa_com_perfil_completo(projeto, capsys):
     main(["init"])
     perfil = projeto / "config" / "profile.yaml"
     conteudo = perfil.read_text(encoding="utf-8").replace(
-        'email: "seu.email@exemplo.com"', 'email: "thiago@dominio.com"'
+        'email: "voce@exemplo.com"', 'email: "pessoa@dominio.com.br"'
     )
+    assert "pessoa@dominio.com.br" in conteudo, "o modelo mudou; ajuste este teste"
+
     perfil.write_text(conteudo, encoding="utf-8")
     (projeto / "data" / "resumes").mkdir(parents=True, exist_ok=True)
     (projeto / "data" / "resumes" / "curriculo.pdf").write_bytes(b"%PDF-1.4")
@@ -122,3 +124,25 @@ def test_role_forcado_pela_linha_de_comando(projeto, capsys):
     saida = capsys.readouterr().out
     assert "cargo ativo: junior" in saida
     assert "bolsa" not in saida.lower()
+
+
+def test_saida_fechada_nao_vira_traceback(projeto):
+    """`candidate roles | head` fecha o stdout no meio; isso nao e erro.
+
+    Roda em subprocesso de proposito: o comportamento e no nivel do descritor
+    de arquivo, entao testar dentro do pytest atrapalharia a captura dele.
+    """
+    import subprocess
+    import sys
+
+    main(["init"])
+    resultado = subprocess.run(
+        f"{sys.executable} -m automatic_candidate roles | head -2",
+        shell=True,
+        cwd=projeto,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert "BrokenPipeError" not in resultado.stderr
+    assert "Traceback" not in resultado.stderr
